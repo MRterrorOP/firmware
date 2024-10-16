@@ -13,12 +13,104 @@ const {
     <meta name="description" content={description} />
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/png" href="images/letter-f.png" />
-
+    <style>
+      #backgroundCanvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+      }
+      #overlay {
+        position: relative;
+        z-index: 2;
+      }
+    </style>
     <title>{title}</title>
   </head>
   <body
     class="min-h-screen pl-[2%] pr-[2%] md:pl-[8%] md:pr-[8%] bg-gradient-to-bl from-blue-900 to-black"
-  >
-    <slot />
+    ><canvas id="backgroundCanvas"></canvas>
+    <div class="fixed" id="overlay">
+      <slot />
+    </div>
+    <script>
+      const canvas = document.querySelector("canvas") as HTMLCanvasElement;
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      const c = canvas.getContext("2d") as CanvasRenderingContext2D;
+
+      class Circle {
+        x: number;
+        y: number;
+        dx: number;
+        dy: number;
+        radius: number;
+
+        constructor(
+          x: number,
+          y: number,
+          dx: number,
+          dy: number,
+          radius: number
+        ) {
+          this.x = x;
+          this.y = y;
+          this.dx = dx;
+          this.dy = dy;
+          this.radius = radius;
+        }
+
+        draw(): void {
+          c.beginPath();
+          console.log("draw is called");
+          c.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+          c.strokeStyle = "lightgreen";
+          c.stroke();
+        }
+
+        update(): void {
+          this.x += this.dx;
+          this.y += this.dy;
+          if (this.x + this.radius > innerWidth || this.x - this.radius < 0) {
+            this.dx = -this.dx;
+            console.log("reversing speed");
+          }
+          if (this.y + this.radius > innerHeight || this.y - this.radius < 0) {
+            this.dy = -this.dy;
+            console.log("reversing speed");
+          }
+
+          this.draw();
+        }
+      }
+
+      const circlesArray: Circle[] = [];
+      for (let i = 0; i < 100; i++) {
+        const radius = Math.random() * 20;
+        const x = Math.random() * (innerWidth - radius * 2) + radius;
+        const y = Math.random() * (innerHeight - 2 * radius) + radius;
+        const dx = (Math.random() - 0.5) * 4;
+        const dy = (Math.random() - 0.5) * 4;
+        const circle = new Circle(x, y, dx, dy, radius);
+        circlesArray.push(circle);
+      }
+      console.log(circlesArray);
+
+      function animate(): void {
+        requestAnimationFrame(animate);
+        c.clearRect(0, 0, window.innerWidth, window.innerHeight);
+        // Use the gradient as the fill style
+        c.fillStyle = "transparent";
+        c.fillRect(0, 0, canvas.width, canvas.height);
+
+        for (const circle of circlesArray) {
+          circle.update();
+        }
+      }
+      animate();
+    </script>
   </body>
 </html>
